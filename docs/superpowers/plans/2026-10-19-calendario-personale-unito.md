@@ -1,6 +1,6 @@
 # Calendario personale UniTo Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Consentire a ogni persona di usare il proprio calendario pubblico UniTo, modificarne singole lezioni e conservare i dati nel browser con backup ripristinabile.
 
@@ -60,11 +60,11 @@ Le proprietà modificabili sono `title`, `start`, `end`, `room`, `note`, `color`
 - Produce `romeLocalInput(iso) -> string` e `romeInstant(localInput) -> ISO string` per datetime-local; rifiutare orari inesistenti e ambigui al cambio d'ora con messaggio esplicito.
 - `romeMidnight(day)` deve usare l'offset della mezzanotte effettiva, non quello di mezzogiorno.
 
-- [ ] Scrivere test per dominio estraneo, credenziali, link valido con spazi esterni, ID differenti nel payload e nessuna richiesta a host arbitrari. Assert sul risultato della richiesta e sul parser, non sul testo del sorgente.
-- [ ] Scrivere test per mezzanotte 29 marzo e 25 ottobre 2026, conversioni Roma indipendenti dal fuso host, ora inesistente/ambigua e intervallo valido; eseguire `node --test tests/source.test.mjs tests/calendar.test.mjs` e verificare fallimenti per funzionalità mancanti.
-- [ ] Implementare le interfacce mantenendo le settimane lunedì-lunedì e il significato di risposta vuota.
-- [ ] Rieseguire test mirati e `npm test`; tutti verdi. Aggiornare il test live per scegliere il calendario tramite variabile d'ambiente validata.
-- [ ] Commit dei soli file di questo task.
+- [x] Scrivere test per dominio estraneo, credenziali, link valido con spazi esterni, ID differenti nel payload e nessuna richiesta a host arbitrari. Assert sul risultato della richiesta e sul parser, non sul testo del sorgente.
+- [x] Scrivere test per mezzanotte 29 marzo e 25 ottobre 2026, conversioni Roma indipendenti dal fuso host, ora inesistente/ambigua e intervallo valido; eseguire `node --test tests/source.test.mjs tests/calendar.test.mjs` e verificare fallimenti per funzionalità mancanti.
+- [x] Implementare le interfacce mantenendo le settimane lunedì-lunedì e il significato di risposta vuota.
+- [x] Rieseguire test mirati e `npm test`; tutti verdi. Aggiornare il test live per scegliere il calendario tramite variabile d'ambiente validata.
+- [x] Commit dei soli file di questo task.
 
 ### Task 2: Modifiche personali indipendenti dalla fonte
 
@@ -75,11 +75,11 @@ Le proprietà modificabili sono `title`, `start`, `end`, `room`, `note`, `color`
 - Produce `validatePatch(patch) -> patch`, `makeOverride(source, patch) -> override`, `mergeSource(overrides, events) -> overrides` e `composeEvents(events, overrides, week, selection) -> events`.
 - Gli eventi visualizzati preservano `subject` per il filtro, aggiungono `title`, `personalNote`, `personalColor`, `hidden`, `sourceChanged` e mantengono accesso al dato ufficiale. Override indicizzati per ID all'interno del profilo calendario.
 
-- [ ] Scrivere test RED per modifica titolo senza alterare il filtro materia, modifica solo dell'occorrenza scelta e isolamento fra due profili con ID evento uguale.
-- [ ] Scrivere test RED per spostamento fra settimane, deduplicazione del dato remoto e fotografato, evento nascosto ripristinabile, fonte annullata e risposta vuota che conserva la personalizzazione.
-- [ ] Scrivere test RED per aggiornamento ufficiale: i campi non personalizzati si aggiornano; i campi personalizzati rimangono; conflitto riconoscibile rispetto a `baseline`. Uno spostamento personale usa il proprio intervallo nel filtro settimanale, una nota senza spostamento usa l'intervallo ufficiale aggiornato.
-- [ ] Eseguire `node --test tests/personal-events.test.mjs`, osservare i fallimenti, implementare e rendere verdi i test. Non dedurre cancellazioni dall'assenza in una risposta settimanale.
-- [ ] Eseguire `npm test` e fare commit del task.
+- [x] Scrivere test RED per modifica titolo senza alterare il filtro materia, modifica solo dell'occorrenza scelta e isolamento fra due profili con ID evento uguale.
+- [x] Scrivere test RED per spostamento fra settimane, deduplicazione del dato remoto e fotografato, evento nascosto ripristinabile, fonte annullata e risposta vuota che conserva la personalizzazione.
+- [x] Scrivere test RED per aggiornamento ufficiale: i campi non personalizzati si aggiornano; i campi personalizzati rimangono; conflitto riconoscibile rispetto a `baseline`. Uno spostamento personale usa il proprio intervallo nel filtro settimanale, una nota senza spostamento usa l'intervallo ufficiale aggiornato.
+- [x] Eseguire `node --test tests/personal-events.test.mjs`, osservare i fallimenti, implementare e rendere verdi i test. Non dedurre cancellazioni dall'assenza in una risposta settimanale.
+- [x] Eseguire `npm test` e fare commit del task.
 
 ### Task 3: Archivio IndexedDB, migrazione e backup
 
@@ -92,12 +92,12 @@ Le proprietà modificabili sono `title`, `start`, `end`, `room`, `note`, `color`
 - `store.importProfiles(profiles)` sostituisce atomicamente i soli profili importati, aggiorna le revisioni e preserva gli altri; `store.close()` rilascia DB e canali.
 - `serializeBackup(profiles) -> string`, `parseBackup(text) -> profiles`: formato `{format:'unito-calendar-personal', version:1, exportedAt, profiles}`; validazione rigorosa e limiti sopra definiti.
 
-- [ ] Installare `fake-indexeddb` come devDependency, senza librerie nuove nel frontend; scrivere test RED di apertura, persistenza dopo riapertura e separazione dei calendari.
-- [ ] Scrivere test RED: migrazione della chiave legacy solo se presente/valida; nessuna importazione del codice cloud; marker e profilo salvati insieme; errore di migrazione lascia intatto il vecchio localStorage.
-- [ ] Scrivere test RED con due connessioni allo stesso DB: revisione vecchia rifiutata; abort dopo una richiesta riuscita rifiuta l'intera Promise; non pubblicare una notifica di successo prima del commit.
-- [ ] Scrivere test RED per backup round-trip, schema/versione non validi, ID/link incoerenti, campi estranei, patch e snapshot invalidi, dimensione eccessiva; import multi-profilo atomico e conservazione dei profili non inclusi.
-- [ ] Eseguire i due file test, osservare RED, implementare e verificare GREEN e `npm test`. Gestire `blocked`/`versionchange` senza lasciare l'app in caricamento indefinito.
-- [ ] Commit del task.
+- [x] Installare `fake-indexeddb` come devDependency, senza librerie nuove nel frontend; scrivere test RED di apertura, persistenza dopo riapertura e separazione dei calendari.
+- [x] Scrivere test RED: migrazione della chiave legacy solo se presente/valida; nessuna importazione del codice cloud; marker e profilo salvati insieme; errore di migrazione lascia intatto il vecchio localStorage.
+- [x] Scrivere test RED con due connessioni allo stesso DB: revisione vecchia rifiutata; abort dopo una richiesta riuscita rifiuta l'intera Promise; non pubblicare una notifica di successo prima del commit.
+- [x] Scrivere test RED per backup round-trip, schema/versione non validi, ID/link incoerenti, campi estranei, patch e snapshot invalidi, dimensione eccessiva; import multi-profilo atomico e conservazione dei profili non inclusi.
+- [x] Eseguire i due file test, osservare RED, implementare e verificare GREEN e `npm test`. Gestire `blocked`/`versionchange` senza lasciare l'app in caricamento indefinito.
+- [x] Commit del task.
 
 ### Task 4: Flusso completo, pubblicazione statica e collaudo
 
@@ -108,18 +108,18 @@ Le proprietà modificabili sono `title`, `start`, `end`, `room`, `note`, `color`
 - `setupPersonalUI({store, getContext, onProfileChange, onCalendarChange})` collega impostazioni, editor e backup; `getContext()` restituisce profilo corrente, settimana e stato dei salvataggi. Il rendering usa gli eventi composti da Task 2.
 - Serializzare le scritture locali e controllare la revisione all'atto del commit. Un editor conserva revisione e ID calendario all'apertura; cambio fonte o aggiornamento esterno non può applicarlo al calendario sbagliato. I dati remoti arrivati tardi vengono ignorati dopo cambio calendario/settimana.
 
-- [ ] Aggiungere prima test RED per layout di sette giorni, contatore coerente dopo filtri/hidden, pipeline archivio → compose → riapertura e ripristino backup. Aggiornare l'aspettativa dei cinque giorni del vecchio test perché il requisito approvato è cambiato.
-- [ ] Integrare setup fonte e migrazione; rimuovere dal percorso pubblico la UI e gli import della sincronizzazione condivisa. Lasciare il Worker remoto invariato; i vecchi moduli non devono essere distribuiti se non più necessari.
-- [ ] Integrare editor accessibile con dati originali, validazione dei campi, nascondi/ripristina e avviso conflitto. Gestire all-day e intervalli su più giorni senza perdere il significato originale.
-- [ ] Collegare “Salvataggio…”, “Salvato in questo browser”, errore/riprova e export del draft in caso di scrittura fallita. Richiedere persistenza dove disponibile; il rifiuto non blocca l'uso. Usare BroadcastChannel con rilettura su focus come fallback; un editor sporco segnala aggiornamenti esterni.
-- [ ] Integrare backup scaricabile, anteprima dell'import con numero di calendari/modifiche e conferma esplicita prima del ripristino; mantenere gli altri profili. Messaggi chiari su salvataggio locale e backup, senza dettagli tecnici superflui.
-- [ ] Correggere import di `monday`, CSS dell'intestazione e griglia settimanale; su telefono rendere i sette giorni scorribili con colonne leggibili e intestazioni accessibili. Aggiornare whitelist server e deploy. Test CI sui branch/PR; deploy solo da main con dipendenze di test installate tramite `npm ci`.
-- [ ] Eseguire `npm test`, `git diff --check` e controllare che il sito serva tutti i nuovi moduli senza esporre file privati. Nessun falso successo su scritture o caricamenti falliti.
-- [ ] Browser reale: primo accesso, link invalido/valido, avanti/indietro/Oggi/data, filtro, modifica lezione, ricarica e chiusura/riapertura. Provare spostamento in altra settimana, weekend, hidden/ripristino, backup/export/import e due schede con editor concorrenti. Controllare console e richieste.
-- [ ] Provare un errore IndexedDB controllato nel test di integrazione; se il browser non offre fault injection sicura, riportare il limite della prova UI e conservare l'evidenza automatica di abort. Provare rete assente senza scritture remote, fonti lente e risposte tardive.
-- [ ] Individuare da pagine ufficiali UniTo un secondo link pubblico distinto; verificare il recupero reale oltre al calendario Informatica e annotare origine, data e risultato. Se manca un secondo link verificabile, non dichiarare compatibilità universale e documentare il collaudo rimasto aperto.
-- [ ] Verifica visuale a larghezza telefono e desktop; se la superficie browser non consente il ridimensionamento, usare una superficie supportata o riportare esplicitamente il limite. Il test desktop non vale come test mobile fisico.
-- [ ] Aggiornare README e report con risultati effettivi, revisione finale dell'intero diff, correzione dei problemi importanti con prova di regressione, suite finale verde e commit. Nessun merge o pubblicazione automatica.
+- [x] Aggiungere prima test RED per layout di sette giorni, contatore coerente dopo filtri/hidden, pipeline archivio → compose → riapertura e ripristino backup. Aggiornare l'aspettativa dei cinque giorni del vecchio test perché il requisito approvato è cambiato.
+- [x] Integrare setup fonte e migrazione; rimuovere dal percorso pubblico la UI e gli import della sincronizzazione condivisa. Lasciare il Worker remoto invariato; i vecchi moduli non devono essere distribuiti se non più necessari.
+- [x] Integrare editor accessibile con dati originali, validazione dei campi, nascondi/ripristina e avviso conflitto. Gestire all-day e intervalli su più giorni senza perdere il significato originale.
+- [x] Collegare “Salvataggio…”, “Salvato in questo browser”, errore/riprova e export del draft in caso di scrittura fallita. Richiedere persistenza dove disponibile; il rifiuto non blocca l'uso. Usare BroadcastChannel con rilettura su focus come fallback; un editor sporco segnala aggiornamenti esterni.
+- [x] Integrare backup scaricabile, anteprima dell'import con numero di calendari/modifiche e conferma esplicita prima del ripristino; mantenere gli altri profili. Messaggi chiari su salvataggio locale e backup, senza dettagli tecnici superflui.
+- [x] Correggere import di `monday`, CSS dell'intestazione e griglia settimanale; su telefono rendere i sette giorni scorribili con colonne leggibili e intestazioni accessibili. Aggiornare whitelist server e deploy. Test CI sui branch/PR; deploy solo da main con dipendenze di test installate tramite `npm ci`.
+- [x] Eseguire `npm test`, `git diff --check` e controllare che il sito serva tutti i nuovi moduli senza esporre file privati. Nessun falso successo su scritture o caricamenti falliti.
+- [x] Browser reale: primo accesso, link invalido/valido, avanti/indietro/Oggi/data, filtro, modifica lezione, ricarica e chiusura/riapertura. Provare spostamento in altra settimana, weekend, hidden/ripristino, backup/export/import e due schede con editor concorrenti. Controllare console e richieste.
+- [x] Provare un errore IndexedDB controllato nel test di integrazione; se il browser non offre fault injection sicura, riportare il limite della prova UI e conservare l'evidenza automatica di abort. Provare rete assente senza scritture remote, fonti lente e risposte tardive.
+- [x] Individuare da pagine ufficiali UniTo un secondo link pubblico distinto; verificare il recupero reale oltre al calendario Informatica e annotare origine, data e risultato. Se manca un secondo link verificabile, non dichiarare compatibilità universale e documentare il collaudo rimasto aperto.
+- [x] Verifica visuale a larghezza telefono e desktop; se la superficie browser non consente il ridimensionamento, usare una superficie supportata o riportare esplicitamente il limite. Il test desktop non vale come test mobile fisico.
+- [x] Aggiornare README e report con risultati effettivi, revisione finale dell'intero diff, correzione dei problemi importanti con prova di regressione, suite finale verde e commit. Nessun merge o pubblicazione automatica.
 
 ## Completamento atteso
 
@@ -127,4 +127,11 @@ Branch locale pronto per revisione con codice, test e istruzioni. La consegna di
 
 ## Stato
 
-Specifica approvata. Piano scritto e controllato rispetto alla specifica; attende revisione dell'utente e scelta della modalità di esecuzione. Nessun codice applicativo modificato durante la pianificazione.
+Specifica e piano approvati dall’utente. Implementazione nativa completata sul branch richiesto, con ricerca di una seconda fonte UniTo e revisione finale indipendente. Tre rilievi medi corretti con prove di regressione; 42 test superati. Collaudo browser e limiti effettivi sono in docs/VERIFICA-PERSONALE.md. Nessun merge o deploy.
+
+
+## Aggiornamenti motivati durante l’esecuzione
+
+- Aggiunto source-reconciliation.js per conservare gli aggiornamenti ufficiali osservati durante un salvataggio.
+- Il limite di 5 MiB viene applicato anche all’archivio salvato e ai candidati accettati, per garantire la possibilità di esportarli; un draft valido può avere un export esplicitamente parziale se gli altri calendari non sono leggibili o non entrano nello stesso file.
+- La prova dell’import usa un File controllato nel normale input della pagina; non è stato collaudato il selettore nativo del sistema.

@@ -1,7 +1,8 @@
 import {parseCalendarLink,romeDay,openingWeek,monday,shiftDay,fetchEvents,subjects,time,dayLabel,romeLocalInput,romeInstant} from './calendar.js';
-import {makeOverride,mergeSource,composeEvents,validatePatch} from './personal-events.js';
+import {makeOverride,composeEvents,validatePatch} from './personal-events.js';
 import {openLocalStore} from './local-store.js';
-import {serializeBackup,parseBackup,MAX_BACKUP_BYTES} from './backup.js';
+import {prepareBackup,parseBackup,validateProfile,MAX_BACKUP_BYTES} from './backup.js';
+import {createSourceReconciler} from './source-reconciliation.js';
 
 const $=id=>document.getElementById(id);
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
@@ -22,6 +23,7 @@ function originalDescription(event){
 export async function startPersonalApp({renderWeek}) {
   let store,profile=null,events=[],week=openingWeek(romeDay()),controller,requestId=0,lastSuccess=0;
   let saving=false,dirty=false,saveError='',conflict=false,editor=null,externalChange=false,displayedCalendarId='';
+  const sourceQueue=createSourceReconciler({getContext:()=>({profile,busy:saving,dirty}),persist:next=>commit(next)});
   let theme='light';try{theme=localStorage.getItem('unito-calendar-theme')||'light';}catch{}
   function setTheme(){const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('theme-toggle').setAttribute('aria-pressed',String(dark));$('theme-toggle').setAttribute('aria-label',dark?'Attiva modalità chiara':'Attiva modalità scura');$('theme-label').textContent=dark?'Modalità chiara':'Modalità scura';}
   setTheme();$('theme-toggle').onclick=()=>{theme=theme==='dark'?'light':'dark';setTheme();try{localStorage.setItem('unito-calendar-theme',theme);}catch{}};
@@ -85,10 +87,12 @@ export async function startPersonalApp({renderWeek}) {
   }
   async function commit(next,expectedRevision=next.revision){
     if(saving||!store)return false;
+    // Reject an unexportable candidate before accepting it as the page's draft.
+    try{validateProfile(next);}catch(error){saveError=error.message;render();return false;}
     profile=structuredClone(next);dirty=true;saving=true;saveError='';conflict=false;render();
     try{profile=await store.saveProfile(next,expectedRevision);dirty=false;externalChange=false;return true;}
     catch(error){saveError=error.message||'Impossibile salvare. Esporta un backup e riprova.';conflict=error.code==='CONFLICT';return false;}
-    finally{saving=false;render();}
+    finally{saving=false;render();void sourceQueue.flush();}
   }
   async function load(clear=false){
     if(!profile)return;
@@ -100,10 +104,8 @@ export async function startPersonalApp({renderWeek}) {
       const result=await fetchEvents(requestedWeek,{calendarId,signal:active.signal});
       if(id!==requestId||profile.calendarId!==calendarId)return;
       events=result;lastSuccess=Date.now();
-      if(!saving&&!dirty){
-        const overrides=mergeSource(profile.overrides,result);
-        if(JSON.stringify(overrides)!==JSON.stringify(profile.overrides))await commit({...profile,overrides});
-      }
+      sourceQueue.observe(calendarId,result);await sourceQueue.flush();
+      if(id!==requestId||profile.calendarId!==calendarId)return;
       render();$('status').textContent=`Aggiornato alle ${time(new Date().toISOString())}`;
     }catch(error){
       if(id!==requestId)return;
@@ -125,7 +127,7 @@ export async function startPersonalApp({renderWeek}) {
       const latest=await store.getProfile(profile.calendarId);
       if(!latest||latest.revision===profile.revision)return;
       if(editor||dirty||saving){externalChange=true;if(editor)editor.querySelector('[data-editor-message]').textContent='Dati cambiati in un’altra scheda. Chiudi e ricarica i dati salvati; le modifiche aperte non sovrascriveranno quella versione.';storageState();return;}
-      profile=latest;render();await refreshSavedCalendars();
+      profile=latest;render();await refreshSavedCalendars();void sourceQueue.flush();
     }catch(error){saveError=error.message;storageState();}
   }
   function openEditor(event){
@@ -196,11 +198,12 @@ export async function startPersonalApp({renderWeek}) {
   };
   $('backup-export').onclick=async()=>{
     try{
-      const all=store?await store.listProfiles().catch(()=>[]):[];
-      if(profile){const i=all.findIndex(p=>p.calendarId===profile.calendarId);if(i<0)all.push(profile);else all[i]=profile;}
-      const content=serializeBackup(all),url=URL.createObjectURL(new Blob([content],{type:'application/json'}));
+      let all=[],readError;
+      try{if(store)all=await store.listProfiles();}catch(error){readError=error;}
+      const prepared=prepareBackup({profiles:all,currentProfile:profile,readError});
+      const url=URL.createObjectURL(new Blob([prepared.content],{type:'application/json'}));
       const anchor=el('a');anchor.href=url;anchor.download=`unito-backup-${romeDay()}.json`;anchor.hidden=true;document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-      $('backup-message').textContent=dirty?'Backup delle modifiche in memoria preparato. Conservalo prima di ricaricare.':'Backup preparato. Conserva il file scaricato in un luogo sicuro.';
+      $('backup-message').textContent=prepared.message+(dirty?' Include le modifiche in memoria: conservalo prima di ricaricare.':'');
     }catch(error){$('backup-message').textContent=error.message;}
   };
   $('backup-import').onchange=async()=>{

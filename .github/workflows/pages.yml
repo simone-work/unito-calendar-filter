@@ -23,7 +23,7 @@ jobs:
           node-version: 24
       - run: npm ci
       - run: npm test
-      - run: mkdir -p dist && cp index.html app.js calendar.js preferences.js personal-events.js local-store.js backup.js personal-ui.js style.css favicon.svg dist/
+      - run: mkdir -p dist && cp index.html app.js calendar.js preferences.js personal-events.js source-reconciliation.js local-store.js backup.js personal-ui.js style.css favicon.svg dist/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

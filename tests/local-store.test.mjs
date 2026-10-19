@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
 import {openLocalStore} from '../local-store.js';
 import {parseCalendarLink,STORAGE_KEY} from '../calendar.js';
+import {makeOverride} from '../personal-events.js';
 const a=parseCalendarLink('https://unito.prod.up.cineca.it/calendarioPubblico/linkCalendarioId=612617b82db4bb0017172839');
 const b=parseCalendarLink('https://unito.prod.up.cineca.it/calendarioPubblico/linkCalendarioId=612617b82db4bb0017172840');
 test('profiles survive reopening and separate calendars and stale concurrent writes',async()=>{
@@ -48,4 +49,13 @@ test('a transaction abort after a successful request rejects saving and rolls ba
   try {await assert.rejects(store.saveProfile({...p,selection:['Uncommitted']},p.revision));}
   finally {proto.put=put;raw.close();}
   assert.equal((await store.getProfile(a.calendarId)).selection,null);store.close();
+});
+test('multiple accepted profiles cannot exceed the backup budget together',async()=>{
+  const store=await openLocalStore({indexedDB:new IDBFactory()});
+  const pa=await store.activateCalendar(a),pb=await store.activateCalendar(b);
+  const source={id:'a',subject:'Analisi',start:'2026-10-19T07:00:00Z',end:'2026-10-19T09:00:00Z',allDay:false,state:'P',cancelled:false,rooms:[],teachers:[],notes:''};
+  const edits=()=>Array.from({length:260},(_,i)=>makeOverride({...source,id:'event-'+i},{note:'x'.repeat(10000)}));
+  await store.saveProfile({...pa,overrides:edits()},pa.revision);
+  await assert.rejects(store.importProfiles([{...pb,overrides:edits()}]),/5 MiB/);
+  assert.equal((await store.getProfile(b.calendarId)).overrides.length,0);store.close();
 });

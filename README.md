@@ -44,13 +44,15 @@ I dati restano nello stesso profilo browser e nella stessa origine del sito. Un 
 
 I vecchi filtri localStorage del calendario Informatica sono migrati una sola volta, senza cancellare l'originale. I vecchi codici cloud non sono migrati né utilizzati. Gli altri calendari vengono configurati al primo accesso.
 
-Limiti: 100 calendari e 5000 personalizzazioni complessive; titolo/aula 500 caratteri, nota 10000, backup JSON UTF-8 massimo 5 MiB. Il backup contiene link e note personali: conservarlo e condividerlo con attenzione. L'app non conserva offline l'intero orario: senza rete rimangono disponibili le sole lezioni personalizzate e le impostazioni.
+Limiti: 100 calendari e 5000 personalizzazioni complessive; titolo/aula 500 caratteri, nota 10000, archivio rappresentabile da un backup JSON UTF-8 massimo di 5 MiB. Un candidato troppo grande viene rifiutato prima di sostituire il draft corrente; i campi aperti nell'editor restano disponibili per ridurli. Anche l'importazione verifica il limite complessivo per evitare archivi salvati ma non esportabili. Il backup contiene link e note personali: conservarlo e condividerlo con attenzione. L'app non conserva offline l'intero orario: senza rete rimangono disponibili le sole lezioni personalizzate e le impostazioni.
+
+Se non è possibile leggere tutti i calendari, oppure un draft valido non entra nel backup insieme agli altri, l'esportazione di emergenza include soltanto il calendario corrente e dichiara esplicitamente che il file è **parziale**. Gli altri calendari non devono essere considerati protetti da quel file.
 
 ## GitHub Pages
 
 Il workflow .github/workflows/pages.yml pubblica da main dopo npm ci e npm test. Non pubblica dai branch di sviluppo. Il workflow tests.yml esegue i test anche sui push e sulle pull request. Per attivare il sito seleziona GitHub Actions nelle impostazioni Pages del repository.
 
-La pubblicazione include soltanto HTML, CSS, icona e i moduli frontend app.js, calendar.js, preferences.js, personal-events.js, local-store.js, backup.js, personal-ui.js. I percorsi sono relativi e funzionano sotto /nome-repository/. Nessun database server, secret o account è necessario.
+La pubblicazione include soltanto HTML, CSS, icona e i moduli frontend app.js, calendar.js, preferences.js, personal-events.js, source-reconciliation.js, local-store.js, backup.js, personal-ui.js. I percorsi sono relativi e funzionano sotto /nome-repository/. Nessun database server, secret o account è necessario.
 
 Il vecchio Worker Cloudflare e i moduli sync restano nel repository come implementazione legacy, con i relativi test. Il frontend personale non li importa e non li distribuisce; nessun cambiamento viene applicato ai servizi remoti esistenti. Wrangler rimane uno strumento di sviluppo opzionale per il codice legacy.
 
@@ -58,6 +60,7 @@ Il vecchio Worker Cloudflare e i moduli sync restano nel repository come impleme
 
 - calendar.js: collegamento a UniTo, parser e date Roma.
 - personal-events.js: composizione fra eventi ufficiali e modifiche personali.
+- source-reconciliation.js: accodamento degli aggiornamenti UniTo arrivati durante un salvataggio o un errore recuperabile.
 - local-store.js: IndexedDB, migrazione, revisioni e notifiche fra schede.
 - backup.js: schema e validazione del backup.
 - personal-ui.js: configurazione, editor, backup e stato salvataggio.

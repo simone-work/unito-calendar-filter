@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseBackup,serializeBackup} from '../backup.js';
+import * as backup from '../backup.js';
+const {parseBackup,serializeBackup}=backup;
 import {makeOverride} from '../personal-events.js';
 import {fromSelection} from '../preferences.js';
 const source={id:'a',subject:'Analisi',start:'2026-10-19T07:00:00Z',end:'2026-10-19T09:00:00Z',allDay:false,state:'P',cancelled:false,rooms:[],teachers:[],notes:''};
@@ -19,4 +20,20 @@ test('a selection must be an array or null, never an iterable string',()=>{
   assert.throws(()=>fromSelection('ABC'));
   const value=JSON.parse(serializeBackup([profile]));value.profiles[0].selection='ABC';
   assert.throws(()=>parseBackup(JSON.stringify(value)));
+});
+test('oversized profiles cannot become accepted unexportable drafts or saved archives',()=>{
+  const large={...profile,overrides:Array.from({length:500},(_,i)=>makeOverride({...source,id:'large-'+i},{note:'x'.repeat(10000)}))};
+  assert.throws(()=>backup.validateProfile(large),/5 MiB/);
+});
+test('emergency export explicitly reports a partial backup when reading other calendars fails',()=>{
+  assert.equal(typeof backup.prepareBackup,'function');
+  const result=backup.prepareBackup({profiles:[],currentProfile:profile,readError:new Error('read failed')});
+  assert.equal(result.partial,true);assert.match(result.message,/parziale/);assert.deepEqual(parseBackup(result.content),[profile]);
+});
+test('a valid draft that exceeds the combined archive budget still has an explicit partial export',()=>{
+  const a={...profile,overrides:Array.from({length:260},(_,i)=>makeOverride({...source,id:'a-'+i},{note:'x'.repeat(10000)}))};
+  const b={...a,calendarId:'612617b82db4bb0017172840',url:'https://unito.prod.up.cineca.it/calendarioPubblico/linkCalendarioId=612617b82db4bb0017172840'};
+  const result=backup.prepareBackup({profiles:[a],currentProfile:b});
+  assert.equal(result.partial,true);assert.match(result.message,/altri calendari non sono inclusi/);
+  assert.equal(parseBackup(result.content)[0].calendarId,b.calendarId);
 });

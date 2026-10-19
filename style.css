@@ -127,6 +127,7 @@ summary{cursor:pointer;font-size:13px;min-height:32px;padding:5px 0}
 .editor-actions{margin-top:22px}.editor-actions button:first-child{background:var(--wine);color:white}
 .week-grid{grid-template-columns:48px repeat(7,minmax(130px,1fr));min-width:958px}
 :root[data-theme=dark] .calendar-settings{background:var(--surface)}
+:root[data-theme=dark] .saved-calendars select{background:#302e33;color:var(--text);border-color:var(--line)}
 :root[data-theme=dark] .personal-dialog details{background:var(--grid)}
 :root[data-theme=dark] .lesson{background:var(--subject-bg);color:var(--subject-text)}
 :root[data-theme=dark] .editor-message{color:#ffa8ad}
