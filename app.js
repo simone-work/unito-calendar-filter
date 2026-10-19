@@ -1,5 +1,5 @@
-import {setupSync} from './sync-ui.js';
-import {SOURCE,STORAGE_KEY,romeDay,openingWeek,shiftDay,fetchEvents,subjects,filterEvents,readSelection,time,dayLabel} from './calendar.js';
+import {startPersonalApp} from './personal-ui.js';
+import {romeDay,shiftDay,time,dayLabel} from './calendar.js';
 
 export const HOUR_HEIGHT = 52;
 const minutes = iso => { const [h,m] = time(iso).split(':').map(Number); return h*60+m; };
@@ -16,7 +16,7 @@ export function subjectColor(subject) {
 }
 
 export function weekLayout(events, week) {
-  const days = Array.from({length:5}, (_,i) => {
+  const days = Array.from({length:7}, (_,i) => {
     const day = shiftDay(week,i);
     const items = events.flatMap(event => {
       const first = romeDay(new Date(event.start)), last = romeDay(new Date(Date.parse(event.end)-1));
@@ -64,24 +64,25 @@ function details(event) {
   const close=el('button','Chiudi');close.onclick=()=>dialog.close();dialog.append(close);
   dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
 }
-function card(event) {
+function card(event, onOpen=details) {
   const node=el('button',undefined,'lesson'+(event.cancelled?' cancelled':''));node.type='button';
-  const color=subjectColor(event.subject);
+  const color=event.personalColor?{background:event.personalColor+'22',border:event.personalColor,text:'#292a2c'}:subjectColor(event.subject);
   node.style.setProperty('--subject-bg',color.background);node.style.setProperty('--subject-border',color.border);node.style.setProperty('--subject-text',color.text);
   const when=event.allDay?'Tutto il giorno':`${time(event.start)}–${time(event.end)}`;
   const status=event.cancelled?' · Annullata':event.state==='S'?' · Sospesa':'';
-  const description=[event.subject,when+status,event.rooms.join(' / ')||'Aula non indicata',event.teachers.join(', '),event.notes].filter(Boolean).join('\n');
-  node.title=description;node.setAttribute('aria-label',description);node.onclick=()=>details(event);
-  node.append(el('strong',event.subject,'lesson-name'),el('span',when+status,'lesson-time'));
+  const description=[event.title||event.subject,when+status,event.rooms.join(' / ')||'Aula non indicata',event.teachers.join(', '),event.personalNote||event.notes].filter(Boolean).join('\n');
+  node.title=description;node.setAttribute('aria-label',description);node.onclick=()=>onOpen(event);
+  node.append(el('strong',(event.personal?'✎ ':'')+(event.title||event.subject),'lesson-name'),el('span',when+status,'lesson-time'));
+  if(event.sourceChanged)node.append(el('span','Fonte aggiornata','lesson-room'));
   if(event.rooms.length)node.append(el('span',event.rooms.join(' / '),'lesson-room'));
   if(event.teachers.length)node.append(el('span',event.teachers.join(', '),'lesson-teacher'));
   return node;
 }
-export function renderWeek(container,events,shown,week) {
+export function renderWeek(container,events,shown,week,{onOpen=details}={}) {
   const scrollLeft=container.querySelector('.calendar-scroll')?.scrollLeft||0;
   const scrollTop=container.querySelector('.calendar-scroll')?.scrollTop||0;
   const layout=weekLayout(events,week), visible=new Set(shown);
-  const scroll=el('div',undefined,'calendar-scroll');scroll.tabIndex=0;scroll.setAttribute('role','region');scroll.setAttribute('aria-label','Calendario da lunedì a venerdì. Scorri per esplorare gli orari e i giorni.');
+  const scroll=el('div',undefined,'calendar-scroll');scroll.tabIndex=0;scroll.setAttribute('role','region');scroll.setAttribute('aria-label','Calendario da lunedì a domenica. Scorri per esplorare gli orari e i giorni.');
   const grid=el('div',undefined,'week-grid');grid.style.setProperty('--hour-height',`${HOUR_HEIGHT}px`);
   grid.append(el('div','Orario','calendar-corner'));
   for(const {day} of layout.days) {
@@ -97,7 +98,7 @@ export function renderWeek(container,events,shown,week) {
   }
   if(layout.days.some(d=>d.allDay.length)) {
     grid.append(el('div','Tutto il giorno','all-day-label'));
-    for(const day of layout.days){const cell=el('div',undefined,'all-day-cell');for(const {event} of day.allDay)if(visible.has(event))cell.append(card(event));grid.append(cell);}
+    for(const day of layout.days){const cell=el('div',undefined,'all-day-cell');for(const {event} of day.allDay)if(visible.has(event))cell.append(card(event,onOpen));grid.append(cell);}
   }
   const height=(layout.end-layout.start)/60*HOUR_HEIGHT;
   const axis=el('div',undefined,'time-axis');axis.style.height=`${height}px`;
@@ -107,7 +108,7 @@ export function renderWeek(container,events,shown,week) {
     const column=el('div',undefined,'calendar-day'+(day.day===romeDay()?' is-today':''));column.style.height=`${height}px`;
     column.setAttribute('aria-label',dayLabel(day.day,{weekday:'long',day:'numeric',month:'long'}));
     for(const item of overlapLayout(day.timed.filter(x=>visible.has(x.event)))) {
-      const node=card(item.event);
+      const node=card(item.event,onOpen);
       if(item.end-item.start<=60)node.classList.add('compact');
       node.style.top=`${(item.start-layout.start)/60*HOUR_HEIGHT}px`;
       node.style.height=`${(item.end-item.start)/60*HOUR_HEIGHT}px`;
@@ -118,66 +119,8 @@ export function renderWeek(container,events,shown,week) {
     grid.append(column);
   }
   scroll.append(grid);container.replaceChildren(scroll);scroll.scrollLeft=scrollLeft;scroll.scrollTop=scrollTop;
-  if(!layout.days.some(d=>[...d.timed,...d.allDay].some(x=>visible.has(x.event))))container.append(el('p',events.length?'Nessuna lezione visibile da lunedì a venerdì per le materie selezionate.':'Nessun evento in questa settimana. Puoi cambiare data o consultare il calendario originale.','calendar-empty'));
+  if(!layout.days.some(d=>[...d.timed,...d.allDay].some(x=>visible.has(x.event))))container.append(el('p',events.length?'Nessuna lezione visibile per le materie selezionate.':'Nessun evento in questa settimana. Puoi cambiare data o consultare il calendario originale.','calendar-empty'));
 }
 
-// Browser entry point; the layout helpers above can also be tested in Node.
-if (typeof document !== 'undefined') {
-const $=id=>document.getElementById(id);
-const subjectsToggle=$('subjects-toggle'), subjectsContent=$('subjects-content');
-const themeToggle=$('theme-toggle'), themeLabel=$('theme-label');
-function setDarkMode(dark) {
-  document.documentElement.dataset.theme=dark?'dark':'light';
-  themeToggle.setAttribute('aria-pressed',String(dark));
-  themeToggle.setAttribute('aria-label',dark?'Attiva modalità chiara':'Attiva modalità scura');
-  themeLabel.textContent=dark?'Modalità chiara':'Modalità scura';
-}
-let darkMode=false;
-try { darkMode=localStorage.getItem('unito-calendar-theme')==='dark'; } catch {}
-setDarkMode(darkMode);
-themeToggle.addEventListener('click',()=>{darkMode=!darkMode;setDarkMode(darkMode);try {localStorage.setItem('unito-calendar-theme',darkMode?'dark':'light');} catch {}});
-function setSubjectsOpen(open) {
-  subjectsToggle.setAttribute('aria-expanded',String(open));
-  subjectsContent.hidden=!open;
-}
-setSubjectsOpen(!window.matchMedia('(max-width:600px)').matches);
-subjectsToggle.addEventListener('click',()=>setSubjectsOpen(subjectsToggle.getAttribute('aria-expanded')!=='true'));
-let week=openingWeek(romeDay()),events=[],selected=null,controller,requestId=0,lastSuccess=0;
-try {selected=readSelection(localStorage);} catch {}
-$('source').href=SOURCE;
-function el(tag,text,className) {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
-let sync;
-function save() {try {localStorage.setItem(STORAGE_KEY,JSON.stringify(selected));} catch {$('storage-note').textContent='Il browser non consente di salvare la selezione. Resterà attiva in questa pagina.';}sync?.changed();}
-function renderFilters() {
-  const names=[...new Set([...subjects(events),...(selected||[])])].sort((a,b)=>a.localeCompare(b,'it'));
-  $('subject-count').textContent=names.length;
-  $('subjects').replaceChildren();
-  for(const name of names.filter(n=>n.toLocaleLowerCase('it').includes($('search').value.toLocaleLowerCase('it')))) {
-    const label=el('label',undefined,'subject'), input=document.createElement('input');input.type='checkbox';input.checked=selected===null||selected.includes(name);
-    input.addEventListener('change',()=>{if(selected===null)selected=[...names];selected=input.checked?[...new Set([...selected,name])]:selected.filter(n=>n!==name);save();render();});
-    label.append(input,el('span',name));$('subjects').append(label);
-  }
-  if(!names.length)$('subjects').append(el('p','Nessuna materia disponibile in questa settimana.','hint'));
-}
-function render() {
-  $('week-title').textContent=`${dayLabel(week)} – ${dayLabel(shiftDay(week,6))}`;
-  $('week-year').textContent=`LA TUA SETTIMANA · ${week.slice(0,4)}`;$('date').value=week;
-  renderFilters();const shown=filterEvents(events,selected);$('total').textContent=`${shown.length} / ${events.length} eventi`;
-  renderWeek($('agenda'),events,shown,week);
-}
-async function load(clear=false) {
-  controller?.abort();controller=new AbortController();const activeController=controller;const id=++requestId;
-  if(clear){events=[];lastSuccess=0;render();}
-  $('agenda').setAttribute('aria-busy','true');$('status').textContent='Aggiornamento da UniTo…';$('error').hidden=true;
-  const timeout=setTimeout(()=>activeController.abort(),25000);
-  try {const result=await fetchEvents(week,{signal:activeController.signal});if(id!==requestId)return;events=result;lastSuccess=Date.now();render();$('status').textContent=`Aggiornato alle ${time(new Date().toISOString())}`;}
-  catch(error){if(id!==requestId)return;$('error').hidden=false;$('error').textContent='Recupero non riuscito. Controlla la connessione e riprova con Aggiorna. '+(error.name==='AbortError'?'Tempo di attesa scaduto.':error.message);$('status').textContent=lastSuccess?`Dati non aggiornati · ultimo recupero ${time(new Date(lastSuccess).toISOString())}`:'Dati non disponibili';}
-  finally {clearTimeout(timeout);if(id===requestId)$('agenda').setAttribute('aria-busy','false');}
-}
-function go(day){week=monday(day);load(true);}
-$('prev').onclick=()=>go(shiftDay(week,-7));$('next').onclick=()=>go(shiftDay(week,7));$('today').onclick=()=>go(romeDay());$('date').onchange=()=>{if(/^\d{4}-\d{2}-\d{2}$/.test($('date').value)&&!isNaN(Date.parse($('date').value)))go($('date').value);};$('refresh').onclick=()=>load();
-$('search').oninput=renderFilters;$('all').onclick=()=>{selected=null;save();render();};$('none').onclick=()=>{selected=[];save();render();};
-setInterval(()=>{if(!document.hidden)load();},300000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastSuccess>60000)load();});
-render();load();
-sync=setupSync({getSelection:()=>selected,applySelection:value=>{selected=value;save();render();}});
-}
+// Browser entry point; layout helpers remain independently testable.
+if (typeof document !== 'undefined') void startPersonalApp({renderWeek});

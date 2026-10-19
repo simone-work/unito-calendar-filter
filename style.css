@@ -80,7 +80,7 @@
 }
 
 .sync-panel{border-top:1px solid var(--line);margin-top:18px;padding-top:8px}.sync-actions{display:flex;flex-wrap:wrap;gap:8px}.sync-panel button{font-size:12px}.sync-panel input{display:block;width:100%;min-width:0;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:8px}.sync-panel form{margin-bottom:12px}.sync-disconnect{margin-top:8px;border:0;color:var(--wine);padding-left:0}.sync-panel button:disabled{cursor:default;opacity:.5}#sync-message:empty,#sync-time:empty{display:none}
-\n+.header-actions{display:flex;align-items:center;gap:16px}.header-actions button{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;min-height:36px;font-size:12px}
+.header-actions{display:flex;align-items:center;gap:16px}.header-actions button{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;min-height:36px;font-size:12px}
 :root[data-theme=dark]{color-scheme:dark;--text:#eeeae7;--surface:#242326;--surface-muted:#171619;--line:#454147;--text-muted:#aaa3a0;--grid:#2b292d;--wine:#d77b98}
 :root[data-theme=dark] body{color:var(--text);background:var(--surface-muted)}
 :root[data-theme=dark] header,:root[data-theme=dark] aside,:root[data-theme=dark] button,:root[data-theme=dark] .calendar-scroll,:root[data-theme=dark] .lesson-details{background:var(--surface);color:var(--text)}
@@ -93,3 +93,57 @@
 :root[data-theme=dark] .intro>p:last-child,:root[data-theme=dark] .hint,:root[data-theme=dark] .status-row,:root[data-theme=dark] footer,:root[data-theme=dark] .calendar-heading span,:root[data-theme=dark] .time-tick{color:var(--text-muted)}
 :root[data-theme=dark] .lesson{box-shadow:0 1px 2px #0006}
 @media(max-width:600px){.header-actions{gap:8px}.header-actions button{padding:6px 8px}.header-actions button span:last-child{display:none}}
+
+/* Personal calendar: source, verified local saving, backup and lesson editor. */
+[hidden]{display:none!important}
+.calendar-settings{border:1px solid var(--line);border-radius:14px;background:#fff;padding:20px;margin-bottom:28px}
+.calendar-settings label{font-size:13px;font-weight:600}
+.source-row{display:flex;gap:10px;align-items:stretch;margin:10px 0}
+.source-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:12px;background:#fafaf8}
+.source-row button{flex-shrink:0;color:var(--wine)}
+.save-row,.backup-actions,.editor-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.save-row{font-size:12px;margin-top:12px;min-height:28px}
+.save-row button{font-size:12px;padding:7px 10px}
+#save-status{color:#416246}#save-status[data-error=true],.editor-message{color:#922e35}
+.editor-message{font-size:13px;white-space:pre-wrap}.editor-message:empty{display:none}
+.backup-settings{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
+summary{cursor:pointer;font-size:13px;min-height:32px;padding:5px 0}
+.file-control{display:flex;flex-direction:column;gap:6px;max-width:100%;font-weight:400!important}
+.file-control input{max-width:100%;font-size:12px;min-height:44px}
+.saved-calendars{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0}
+.saved-calendars select{max-width:100%;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:8px;background:white;font:inherit;color:inherit}
+.welcome{padding:25px;border:1px dashed var(--line);border-radius:12px;color:#77736e}
+.hidden-events{padding:16px;border:1px solid var(--line);border-radius:12px}
+#hidden-list{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:8px}
+.personal-dialog{width:min(600px,calc(100% - 24px));padding:24px}
+.personal-dialog details{margin-top:16px;padding:8px 12px;background:#f7f7f4;border-radius:8px}
+.personal-dialog details p{font-size:12px}
+.editor-field{display:flex;flex-direction:column;gap:6px;font-size:13px;margin:16px 0}
+.editor-field input,.editor-field textarea{border:1px solid var(--line);border-radius:8px;padding:10px;max-width:100%;min-width:0;font:inherit;background:#fff;color:inherit}
+.editor-field textarea{resize:vertical;min-height:100px}
+.editor-field:has(input[type=checkbox]){flex-direction:row;align-items:center}
+.editor-field input[type=checkbox]{width:20px;height:20px;accent-color:var(--wine)}
+.editor-field input[type=color]{height:44px;width:84px;padding:4px}
+.editor-actions{margin-top:22px}.editor-actions button:first-child{background:var(--wine);color:white}
+.week-grid{grid-template-columns:48px repeat(7,minmax(130px,1fr));min-width:958px}
+:root[data-theme=dark] .calendar-settings{background:var(--surface)}
+:root[data-theme=dark] .personal-dialog details{background:var(--grid)}
+:root[data-theme=dark] .lesson{background:var(--subject-bg);color:var(--subject-text)}
+:root[data-theme=dark] .editor-message{color:#ffa8ad}
+:root[data-theme=dark] #save-status{color:#add7af}
+:root[data-theme=dark] #save-status[data-error=true]{color:#ffa8ad}
+button:disabled,input:disabled,select:disabled{cursor:default;opacity:.55}
+@media(max-width:600px){
+  .calendar-settings{padding:14px;margin-bottom:22px}
+  .source-row{flex-direction:column}.source-row input{font-size:16px}
+  .source-row button{align-self:flex-start}
+  .backup-actions{align-items:flex-start;flex-direction:column}
+  .calendar-scroll{overflow-x:auto;scroll-padding:58px 0 0 40px}
+  .week-grid{width:auto;min-width:950px;grid-template-columns:40px repeat(7,minmax(130px,1fr))}
+  .lesson,.lesson.compact{padding:5px 4px;gap:2px;font-size:11px;border-radius:5px}
+  .lesson-name{font-size:11px;line-height:1.3;-webkit-line-clamp:3}
+  .lesson-time,.lesson-room{font-size:10px}
+  .calendar-heading .heading-mobile{font-size:12px}
+  .calendar-corner,.time-tick{font-size:10px}
+  .personal-dialog{padding:18px}.editor-field input,.editor-field textarea{font-size:16px}
+}

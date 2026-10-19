@@ -12,6 +12,7 @@ export function validatePreferences(value) {
   return {mode: value.mode, selectedSubjects: [...value.selectedSubjects]};
 }
 export function fromSelection(selected) {
+  if(selected!==null&&!Array.isArray(selected))throw new Error('La selezione deve essere un elenco di materie oppure Tutte.');
   return validatePreferences({mode: selected === null ? 'all' : 'selected', selectedSubjects: selected === null ? [] : [...selected]});
 }
 export function toSelection(value) {

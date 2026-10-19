@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {IDBFactory} from 'fake-indexeddb';
+import {openLocalStore} from '../local-store.js';
+import {parseCalendarLink} from '../calendar.js';
+import {makeOverride,composeEvents,mergeSource} from '../personal-events.js';
+import {serializeBackup,parseBackup} from '../backup.js';
+test('an edited weekend lesson survives source refresh, database reopening and backup restore',async()=>{
+  const indexedDB=new IDBFactory(),source={id:'lesson',subject:'Corso',start:'2026-10-19T07:00:00Z',end:'2026-10-19T09:00:00Z',allDay:false,state:'P',cancelled:false,rooms:[],teachers:[],notes:''};
+  let store=await openLocalStore({indexedDB});
+  let profile=await store.activateCalendar(parseCalendarLink('https://unito.prod.up.cineca.it/calendarioPubblico/linkCalendarioId=612617b82db4bb0017172839'));
+  profile.overrides=[makeOverride(source,{start:'2026-10-24T07:00:00Z',end:'2026-10-24T09:00:00Z',note:'Ripasso'})];
+  profile=await store.saveProfile(profile,profile.revision);
+  profile.overrides=mergeSource(profile.overrides,[{...source,state:'A',cancelled:true}]);
+  await store.saveProfile(profile,profile.revision);store.close();
+  store=await openLocalStore({indexedDB});
+  const backup=serializeBackup(await store.listProfiles());
+  const restored=await openLocalStore({indexedDB:new IDBFactory()});await restored.importProfiles(parseBackup(backup));
+  const p=(await restored.listProfiles())[0],events=composeEvents([],p.overrides,'2026-10-19',null);
+  assert.equal(events.length,1);assert.equal(events[0].start,'2026-10-24T07:00:00Z');assert.equal(events[0].personalNote,'Ripasso');assert.equal(events[0].cancelled,true);
+  assert.equal(composeEvents([],p.overrides,'2026-10-19',[]).length,0);
+  store.close();restored.close();
+});
