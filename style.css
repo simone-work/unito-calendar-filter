@@ -148,3 +148,39 @@ button:disabled,input:disabled,select:disabled{cursor:default;opacity:.55}
   .calendar-corner,.time-tick{font-size:10px}
   .personal-dialog{padding:18px}.editor-field input,.editor-field textarea{font-size:16px}
 }
+
+/* Consistent file action and date picker, including the opened calendar. */
+.backup-actions button,.calendar-settings .file-control{font-size:13px;line-height:1.4;min-height:44px}
+.calendar-settings .file-control{position:relative;display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;margin:0;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:inherit;cursor:pointer}
+.calendar-settings .file-control input{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;opacity:0;cursor:pointer}
+.calendar-settings .file-control:has(input:not(:disabled)):hover{border-color:var(--wine);color:var(--wine)}
+.calendar-settings .file-control:focus-within{outline:3px solid #bb6c86;outline-offset:3px}
+.calendar-settings .file-control:has(input:disabled){opacity:.55;cursor:default}
+.calendar-settings .file-control input:disabled{cursor:default}
+.date-control{display:flex;align-items:center;gap:10px;min-width:0}
+.date-trigger{display:inline-flex;align-items:center;gap:9px;min-height:44px;font-size:13px;font-variant-numeric:tabular-nums;background:#fff}
+.date-trigger svg{color:var(--wine);flex-shrink:0}.date-chevron{margin-left:2px;font-size:16px;color:#8a837e}
+.date-trigger[aria-expanded=true]{border-color:var(--wine);box-shadow:0 0 0 3px #7c253e12}
+.date-popover{--picker-muted:#958c88;--picker-hover:#f5edf0;--picker-selected:#7c253e;position:fixed;z-index:30;box-sizing:border-box;max-height:calc(100vh - 32px);overflow:auto;padding:14px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 48px #292a2c24,0 2px 8px #292a2c0a;font-size:13px;color:#292a2c}
+.date-picker-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.date-picker-header h3{margin:0;font-size:14px;font-weight:650;text-transform:capitalize;letter-spacing:-.01em}
+.date-picker-header button{width:36px;min-height:36px;padding:0;border-color:transparent;background:transparent;font-size:24px;line-height:1;color:inherit}
+.date-picker-header button:hover{background:var(--picker-hover);color:var(--wine)}
+.date-picker-grid{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:3px;margin:10px 0}
+.date-picker-grid th{padding:4px 0 8px;font-size:10px;font-weight:600;color:#8a837e;text-align:center}
+.date-picker-grid td{padding:0;text-align:center}
+.date-popover .date-day{position:relative;display:block;width:100%;min-height:36px;padding:6px 0;border:0;border-radius:9px;background:transparent;color:inherit;text-align:center;font-size:13px;font-variant-numeric:tabular-nums}
+.date-popover .date-day:hover{background:var(--picker-hover);color:var(--wine)}
+.date-popover .date-day.is-outside{color:var(--picker-muted)}
+.date-popover .date-day.is-selected{background:var(--picker-selected);color:#fff;font-weight:650}
+.date-day.is-today:after{content:'';position:absolute;bottom:3px;left:calc(50% - 1.5px);width:3px;height:3px;border-radius:50%;background:currentColor}
+.date-picker-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
+.date-picker-footer button{font-size:12px;min-height:36px;padding:7px 10px;border-color:transparent;background:transparent;color:var(--wine)}
+.date-picker-footer button:hover{background:var(--picker-hover);border-color:transparent}
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+:root[data-theme=dark] .file-control{background:var(--surface)}
+:root[data-theme=dark] .date-popover{--picker-muted:#817981;--picker-hover:#3b2c34;--picker-selected:#b84e74;background:var(--surface);color:var(--text);box-shadow:0 18px 54px #0006,0 0 0 1px #ffffff04}
+:root[data-theme=dark] .date-picker-grid th{color:var(--text-muted)}
+:root[data-theme=dark] .date-picker-header button,:root[data-theme=dark] .date-picker-footer button{background:transparent}
+:root[data-theme=dark] .date-picker-footer button{color:var(--wine)}
+@media(max-width:600px){.sub-toolbar{flex-wrap:wrap}.date-caption{font-size:12px}.date-trigger{font-size:13px}.backup-actions{align-items:stretch}.backup-actions button,.calendar-settings .file-control{justify-content:center}}

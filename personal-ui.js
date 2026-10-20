@@ -3,6 +3,7 @@ import {makeOverride,composeEvents,validatePatch} from './personal-events.js';
 import {openLocalStore} from './local-store.js';
 import {prepareBackup,parseBackup,validateProfile,MAX_BACKUP_BYTES} from './backup.js';
 import {createSourceReconciler} from './source-reconciliation.js';
+import {setupDatePicker} from './date-picker.js';
 
 const $=id=>document.getElementById(id);
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
@@ -24,6 +25,7 @@ export async function startPersonalApp({renderWeek}) {
   let store,profile=null,events=[],week=openingWeek(romeDay()),controller,requestId=0,lastSuccess=0;
   let saving=false,dirty=false,saveError='',conflict=false,editor=null,externalChange=false,displayedCalendarId='';
   const sourceQueue=createSourceReconciler({getContext:()=>({profile,busy:saving,dirty}),persist:next=>commit(next)});
+  const datePicker=setupDatePicker({trigger:$('date'),panel:$('date-popover'),onSelect:day=>go(day)});
   let theme='light';try{theme=localStorage.getItem('unito-calendar-theme')||'light';}catch{}
   function setTheme(){const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('theme-toggle').setAttribute('aria-pressed',String(dark));$('theme-toggle').setAttribute('aria-label',dark?'Attiva modalità chiara':'Attiva modalità scura');$('theme-label').textContent=dark?'Modalità chiara':'Modalità scura';}
   setTheme();$('theme-toggle').onclick=()=>{theme=theme==='dark'?'light':'dark';setTheme();try{localStorage.setItem('unito-calendar-theme',theme);}catch{}};
@@ -42,6 +44,7 @@ export async function startPersonalApp({renderWeek}) {
     $('backup-export').disabled=(!store&&!profile)||saving;
     $('backup-import').disabled=!store||locked;
     for(const id of ['prev','next','today','date','refresh','all','none'])$(id).disabled=!profile||saving||dirty;
+    if($('date').disabled)datePicker.close();
     for(const input of $('subjects').querySelectorAll('input'))input.disabled=saving||dirty;
   }
   async function refreshSavedCalendars(){
@@ -68,7 +71,7 @@ export async function startPersonalApp({renderWeek}) {
   }
   function render(){
     $('week-title').textContent=`${dayLabel(week)} – ${dayLabel(shiftDay(week,6))}`;
-    $('week-year').textContent=`LA TUA SETTIMANA · ${week.slice(0,4)}`;$('date').value=week;
+    $('week-year').textContent=`LA TUA SETTIMANA · ${week.slice(0,4)}`;datePicker.setDate(week);
     $('source').hidden=!profile;if(profile){$('source').href=profile.url;if(displayedCalendarId!==profile.calendarId){$('calendar-link').value=profile.url;displayedCalendarId=profile.calendarId;}}
     $('schedule-content').hidden=!profile;$('welcome').hidden=!!profile;
     renderFilters();
@@ -186,7 +189,6 @@ export async function startPersonalApp({renderWeek}) {
   $('saved-calendars').onchange=async()=>{const p=await store.getProfile($('saved-calendars').value);if(p)void activate(p);};
   function go(day){if(!profile||saving||dirty)return;week=monday(day);void load(true);}
   $('prev').onclick=()=>go(shiftDay(week,-7));$('next').onclick=()=>go(shiftDay(week,7));$('today').onclick=()=>go(romeDay());
-  $('date').onchange=()=>{try{romeInstant($('date').value+'T00:00');go($('date').value);}catch(error){$('error').hidden=false;$('error').textContent=error.message;}};
   $('refresh').onclick=()=>void load();$('search').oninput=renderFilters;
   $('all').onclick=()=>{if(profile&&!saving&&!dirty)void commit({...profile,selection:null});};
   $('none').onclick=()=>{if(profile&&!saving&&!dirty)void commit({...profile,selection:[]});};

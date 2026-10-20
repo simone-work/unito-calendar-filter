@@ -52,7 +52,7 @@ Se non è possibile leggere tutti i calendari, oppure un draft valido non entra 
 
 Il workflow .github/workflows/pages.yml pubblica da main dopo npm ci e npm test. Non pubblica dai branch di sviluppo. Il workflow tests.yml esegue i test anche sui push e sulle pull request. Per attivare il sito seleziona GitHub Actions nelle impostazioni Pages del repository.
 
-La pubblicazione include soltanto HTML, CSS, icona e i moduli frontend app.js, calendar.js, preferences.js, personal-events.js, source-reconciliation.js, local-store.js, backup.js, personal-ui.js. I percorsi sono relativi e funzionano sotto /nome-repository/. Nessun database server, secret o account è necessario.
+La pubblicazione include soltanto HTML, CSS, icona e i moduli frontend app.js, calendar.js, preferences.js, personal-events.js, source-reconciliation.js, local-store.js, backup.js, personal-ui.js, date-picker.js. I percorsi sono relativi e funzionano sotto /nome-repository/. Nessun database server, secret o account è necessario.
 
 Il vecchio Worker Cloudflare e i moduli sync restano nel repository come implementazione legacy, con i relativi test. Il frontend personale non li importa e non li distribuisce; nessun cambiamento viene applicato ai servizi remoti esistenti. Wrangler rimane uno strumento di sviluppo opzionale per il codice legacy.
 
@@ -64,6 +64,7 @@ Il vecchio Worker Cloudflare e i moduli sync restano nel repository come impleme
 - local-store.js: IndexedDB, migrazione, revisioni e notifiche fra schede.
 - backup.js: schema e validazione del backup.
 - personal-ui.js: configurazione, editor, backup e stato salvataggio.
+- date-picker.js: selettore data con tema e navigazione da tastiera.
 - app.js: layout settimanale, sovrapposizioni e colori.
 
 Il catalogo materie deriva dalla settimana richiesta e dalle scelte/personalizzazioni salvate, non dall'intero anno. I nomi esatti della fonte identificano le materie: variazioni nelle denominazioni possono richiedere una nuova selezione. Il servizio pubblico UniTo può cambiare schema, policy o disponibilità; il sito non aggira autenticazione o CORS.

@@ -57,6 +57,16 @@ Nessun rilievo critico o minore rinviato dal revisore. I limiti di collaudo elen
 
 ## Decisioni operative
 
+### Rifinitura dei controlli — 20 ottobre 2026
+
+Sostituita la presentazione del selettore file con il pulsante Importa backup, mantenendo l'input file e la procedura di importazione esistenti. Il selettore della data usa ora un pannello in tema con mese, giorni e comandi Oggi/Chiudi; supporta frecce, Pagina su/giù, Invio ed Esc.
+
+Verifica browser desktop: scelta della settimana con freccia e Invio, cambio mese, Esc con ritorno del focus e ritorno alla settimana attuale. Console senza errori. Verificata visivamente la disposizione dei controlli a 390 pixel; l'interazione con il pannello dentro l'iframe mobile non è stata verificata, perché il controllo browser non riusciva a raggiungerlo. Nessuna prova su dispositivo fisico. Anteprima in `docs/images/controlli-calendario.png`.
+
+La revisione indipendente ha individuato un giorno focalizzato potenzialmente fuori dalla zona visibile nei pannelli bassi: corretto lo scorrimento interno e aggiunto un test di regressione. Suite completa: **46 test superati**. Inclusione del nuovo modulo verificata nel server locale e nel workflow Pages.
+
+### Scelte precedenti
+
 - Riutilizzato il checkout del branch richiesto dall'utente anziché crearne un altro; le modifiche rimangono in questo checkout.
 - Registro di avanzamento gestito in PowerShell anziché con gli script bash della skill, mantenendo task e risultati; richiede controllo esplicito del registro.
 - Aggiornato Wrangler per eliminare le vulnerabilità note dello strumento legacy; il rischio di compatibilità è stato verificato con bundle dry-run, senza deploy remoto.
